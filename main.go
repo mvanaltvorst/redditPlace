@@ -69,17 +69,6 @@ func makeHeatmap() (image.Image, error) {
 	return img, nil
 }
 
-func main() {
-	img, err := makeHeatmap()
-	if err != nil {
-		log.Panic(err)
-	}
-
-	if err := saveImageWithOpaqueBackground(img); err != nil {
-		log.Panic(err)
-	}
-}
-
 func saveImageWithOpaqueBackground(img image.Image) error {
 	imgout, err := os.Create("out.png")
 	if err != nil {
@@ -96,4 +85,15 @@ func saveImageWithOpaqueBackground(img image.Image) error {
 
 	png.Encode(imgout, background)
 	return nil
+}
+
+func main() {
+	img, err := makeHeatmap()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	if err := saveImageWithOpaqueBackground(img); err != nil {
+		log.Panic(err)
+	}
 }
