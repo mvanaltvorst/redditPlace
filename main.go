@@ -22,13 +22,13 @@ import (
 func makeHeatmap() (image.Image, error) {
 	points := []heatmap.DataPoint{}
 
-	log.Printf("getting data from github")
+	log.Printf("getting data from moustacheminer")
 
-	resp, err := http.Get("https://github.com/moustacheminer/place/blob/master/export.csv?raw=true")
+	resp, err := http.Get("moustacheminer.com/place/export.csv")
 	if err != nil {
 		return nil, fmt.Errorf("could not get CSV data from github: %v", err)
 	}
-	log.Printf("got data from github")
+	log.Printf("got data from moustacheminer")
 
 	reader := csv.NewReader(resp.Body)
 	for {
