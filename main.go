@@ -10,10 +10,10 @@ import (
 	"os"
 
 	"encoding/csv"
-
-	"image/draw"
 	"net/http"
 	"strconv"
+
+	"image/draw"
 
 	heatmap "github.com/dustin/go-heatmap"
 	"github.com/dustin/go-heatmap/schemes"
@@ -21,33 +21,47 @@ import (
 
 func makeHeatmap() (image.Image, error) {
 	points := []heatmap.DataPoint{}
+
 	log.Printf("getting data from github")
+
 	resp, err := http.Get("https://github.com/moustacheminer/place/blob/master/export.csv?raw=true")
 	if err != nil {
 		return nil, fmt.Errorf("could not get CSV data from github: %v", err)
 	}
 	log.Printf("got data from github")
-	reader := csv.NewReader(resp.Body)
 
+	reader := csv.NewReader(resp.Body)
 	for {
 		record, err := reader.Read()
+
 		if err == io.EOF {
 			break
-		}
-		if err != nil {
+		} else if err != nil {
 			return nil, fmt.Errorf("could not read record: %v", err)
 		}
+
 		x, err := strconv.Atoi(record[1])
 		if err != nil {
 			return nil, fmt.Errorf("could not parse int X: %v", err)
 		}
+
 		y, err := strconv.Atoi(record[2])
 		if err != nil {
 			return nil, fmt.Errorf("could not parse int Y: %v", err)
 		}
-		points = append(points, heatmap.P(float64(x), float64(1000-y))) // We have to invert Y to render the image upright for some reason
+
+		// We have to invert Y to render the image upright for some reason
+		points = append(
+			points,
+			heatmap.P(
+				float64(x),
+				float64(1000-y),
+			),
+		)
 	}
+
 	log.Printf("parsed CSV data")
+
 	img := heatmap.Heatmap(image.Rect(0, 0, 1000, 1000),
 		points, 2, 255, schemes.AlphaFire)
 	log.Printf("made heatmap")
@@ -60,6 +74,7 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
 	if err := saveImageWithOpaqueBackground(img); err != nil {
 		log.Panic(err)
 	}
@@ -72,9 +87,13 @@ func saveImageWithOpaqueBackground(img image.Image) error {
 	}
 	defer imgout.Close()
 
+	// Initialize the background with the same dimensions as the source image
 	background := image.NewRGBA(img.Bounds())
+	// Fill the background with black
 	draw.Draw(background, background.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Src)
+	// Draw the transparent image over the black background
 	draw.Draw(background, background.Bounds(), img, img.Bounds().Min, draw.Over)
+
 	png.Encode(imgout, background)
 	return nil
 }
