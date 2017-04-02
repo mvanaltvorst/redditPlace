@@ -10,7 +10,6 @@ import (
 	"os"
 
 	"encoding/csv"
-	"net/http"
 	"strconv"
 
 	"image/draw"
@@ -19,18 +18,20 @@ import (
 	"github.com/dustin/go-heatmap/schemes"
 )
 
-func makeHeatmap() (image.Image, error) {
+func makeHeatmap(input io.Reader) (image.Image, error) {
 	points := []heatmap.DataPoint{}
 
 	log.Printf("getting data from moustacheminer")
 
-	resp, err := http.Get("moustacheminer.com/place/export.csv")
-	if err != nil {
-		return nil, fmt.Errorf("could not get CSV data from github: %v", err)
-	}
+	// resp, err := http.Get("moustacheminer.com/place/export.csv")
+	// if err != nil {
+	// 	return nil, fmt.Errorf("could not get CSV data from github: %v", err)
+	// }
+
 	log.Printf("got data from moustacheminer")
 
-	reader := csv.NewReader(resp.Body)
+	// reader := csv.NewReader(resp.Body)
+	reader := csv.NewReader(file)
 	for {
 		record, err := reader.Read()
 
@@ -63,7 +64,7 @@ func makeHeatmap() (image.Image, error) {
 	log.Printf("parsed CSV data")
 
 	img := heatmap.Heatmap(image.Rect(0, 0, 1000, 1000),
-		points, 2, 255, schemes.AlphaFire)
+		points, 2, 255, schemes.Classic)
 	log.Printf("made heatmap")
 
 	return img, nil
@@ -88,7 +89,17 @@ func saveImageWithOpaqueBackground(img image.Image) error {
 }
 
 func main() {
-	img, err := makeHeatmap()
+	// resp, err := http.Get("moustacheminer.com/place/export.csv")
+	// if err != nil {
+	// 	panic(fmt.Sprintf("could not get CSV data from github: %v", err))
+	// }
+
+	file, err := os.Open("export.csv")
+	if err != nil {
+		panic("could not open export.csv")
+	}
+
+	img, err := makeHeatmap(file)
 	if err != nil {
 		log.Panic(err)
 	}
